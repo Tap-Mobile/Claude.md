@@ -32,10 +32,25 @@ Ship fast. Ship safe. Never leave the user stuck.
 - [ ] Compiles/lints clean
 - [ ] Tests pass (run them)
 - [ ] Manual verification of specific behavior
+- [ ] **Visual verify via Chrome** if applicable (see below)
 - [ ] `git diff` — no unintended changes
 
 ### Handoff
 `Outcome | Changes | Verified | Next steps` — one line for trivial fixes.
+
+## Visual Feedback Loop (Chrome Extension)
+When `mcp__claude-in-chrome__*` tools are available, **use them proactively to self-verify** — don't ping the user for visual confirmation.
+
+**When to use**: Any task with visible output — frontend, emails, docs, web apps, dashboards, API responses rendered in browser.
+
+**Loop**: Code change → open/refresh in Chrome → read page / screenshot → assess → fix issues → repeat until right. This is your eyes. Use them.
+
+**Rules**:
+- Navigate to the actual page after changes — don't assume it looks correct
+- Check responsive behavior (resize window) when layout matters
+- Read console for errors (`read_console_messages`) after every page load
+- If something looks wrong, fix it immediately and re-check — zero user roundtrips
+- Record GIF (`gif_creator`) for multi-step interactions the user may want to review
 
 ## Autonomous Bug Fixing
 Bug report → reproduce → root cause → fix → verify → report.
