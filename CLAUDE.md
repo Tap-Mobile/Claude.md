@@ -25,15 +25,19 @@ Ship fast. Ship safe. Never leave the user stuck.
 ### Execute
 - Follow existing architecture. Smallest change. Delete code when possible.
 - Add tests when behavior changes. Keep intermediate states working.
+- **Phased execution**: Multi-file refactors — max 5 files per phase. Complete phase, verify, then next phase. Never attempt 15-file changes in one shot.
+- **Dead code first**: Before structural refactors on files >300 LOC, remove unused imports/exports/props/debug logs. Commit cleanup separately.
 - **Elegance check** (non-trivial only): "Is there a more elegant way?" / "Am I fighting the codebase?" If hacky: implement the elegant solution. Skip for simple fixes.
 - **Anti-patterns**: No drive-by refactors. No `// TODO` without a plan. No premature abstractions.
 
 ### Verify (prove it — never skip)
-- [ ] Compiles/lints clean
-- [ ] Tests pass (run them)
+- [ ] Compiles/lints clean (`tsc --noEmit`, `eslint`, or project equivalent)
+- [ ] Tests pass (run them — don't assume)
 - [ ] Manual verification of specific behavior
 - [ ] **Visual verify via Chrome** if applicable (see below)
 - [ ] `git diff` — no unintended changes
+
+Never say "Done!" with errors outstanding. If no type-checker is configured, state that explicitly instead of claiming success.
 
 ### Handoff
 `Outcome | Changes | Verified | Next steps` — one line for trivial fixes.
@@ -55,6 +59,10 @@ When `mcp__claude-in-chrome__*` tools are available, **use them proactively to s
 ## Autonomous Bug Fixing
 Bug report → reproduce → root cause → fix → verify → report.
 Never ask "where should I look?" — just fix it.
+
+**Bug autopsy**: After fixing, explain *why* it happened and whether anything prevents that category of bug in the future. Don't just fix and move on.
+
+**Failure recovery**: If a fix doesn't work after two attempts, stop. Re-read the entire relevant section top-down. State where your mental model was wrong. Propose something fundamentally different — don't keep iterating on a broken approach.
 
 ## Self-Improvement Loop
 After ANY user correction:
@@ -89,6 +97,18 @@ One task per subagent. Synthesize findings before acting.
 - SSH key/token present → commit and push directly. Missing → provide patch + commands.
 - One logical change per commit.
 - New services in Docker/docker-compose. Bare-metal only if explicitly approved.
+
+## Context Discipline
+
+**Context decay**: After 10+ messages in a conversation, re-read any file before editing it. Do not trust your memory of file contents — auto-compaction may have silently destroyed that context. Editing against stale state produces broken output.
+
+**Edit integrity**: Before every file edit, re-read the file. After editing, read it again to confirm the change applied correctly. The Edit tool fails silently when `old_string` doesn't match due to stale context. Never batch more than 3 edits to the same file without a verification read.
+
+**File read budget**: For files over 500 LOC, use `offset` and `limit` parameters to read in sequential chunks. Never assume you've seen a complete file from a single read.
+
+**Tool result truncation**: If any search or command returns suspiciously few results, re-run with narrower scope (single directory, stricter glob). State when you suspect truncation occurred.
+
+**Rename safety**: When renaming any function/type/variable, grep is text matching, not an AST. Search separately for: direct calls, type-level references, string literals containing the name, dynamic imports, re-exports and barrel files, test files and mocks. Assume one grep missed something.
 
 ## Claude Code Tools
 - `Glob` not `find` | `Grep` not `rg` | `Read` not `cat` | `Edit` over `Write`
