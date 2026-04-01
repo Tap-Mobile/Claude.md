@@ -57,4 +57,4 @@ mkdir -p tasks
 
 ## License
 
-MIT — use it, fork it, make it yours.
+Proprietary. All rights reserved.
