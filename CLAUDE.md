@@ -39,6 +39,9 @@ Ship fast. Ship safe. Never leave the user stuck.
 
 Never say "Done!" with errors outstanding. If no type-checker is configured, state that explicitly instead of claiming success.
 
+### Self-Review Gate (non-trivial work only)
+Before reporting completion on substantial work (multi-file changes, new features, refactors), launch a code-review subagent (`model: "opus"`) to review your own changes. The subagent should check for: bugs, missed edge cases, inconsistencies with existing patterns, and anything you'd flag in a real PR review. Fix all real issues found, then re-run verification. Only report done to the user after the review passes clean. Skip for: typos, config, single-file fixes.
+
 ### Handoff
 `Outcome | Changes | Verified | Next steps` — one line for trivial fixes.
 
