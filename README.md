@@ -8,7 +8,11 @@ Eliminates ping-pong, enforces verification, and keeps context lean.
 
 - **Staff engineer identity** — ownership mentality, autonomous bug fixing
 - **Structured workflow** — intake → plan → execute → verify → handoff
+- **Context discipline** — context decay awareness, edit integrity verification, file read budgeting, tool result truncation detection, rename safety
+- **Self-review gate** — Opus code-review subagent verifies your work before reporting done on non-trivial changes
+- **Execution guardrails** — phased multi-file refactors (max 5 files/phase), dead code cleanup before structural changes
 - **Visual feedback loop** — self-verify via Chrome extension, zero user roundtrips
+- **Bug autopsy & failure recovery** — explain *why* bugs happen, escalate after two failed attempts
 - **Self-improvement** — persistent `tasks/lessons.md` that compounds across sessions
 - **Subagent strategy** — model policy for Task tool (Sonnet 4.6+) and Codex MCP (5.3+, larger context window)
 - **Safety rules** — production defaults, GPU awareness, destructive action gates
