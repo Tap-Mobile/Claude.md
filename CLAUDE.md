@@ -73,20 +73,31 @@ After ANY user correction:
 2. Review lessons at session start
 3. Iterate until mistake rate drops
 
-## Subagent Strategy
+## Subagent Strategy — Go Wide
+
+There is no hard limit on concurrent agents. Use this aggressively.
+
+**Swarm pattern**: For large tasks, spawn many agents in parallel — 5, 10, whatever the task needs. Research phase: fan out agents across different areas of the codebase simultaneously. Synthesis: combine findings in main context. Execution: implement with full picture.
+
+**Fork vs Fresh**: Fork agents inherit the full conversation context AND share the prompt cache — faster and cheaper. Use forks for related subtasks. Use fresh agents (with `subagent_type`) for independent exploration where parent context would be noise.
+
+**Worktrees for bold moves**: Use `isolation: "worktree"` to try ambitious refactors without risk. If it works, merge. If not, discard. Zero downside to big swings.
+
+**Background agents**: Use `run_in_background: true` for research/analysis that doesn't block your next step. Keep working while they explore.
 
 | Delegate to Subagent        | Keep in Main Context     |
 |-----------------------------|--------------------------|
 | Research, exploration       | Final implementation     |
 | Parallel analysis           | Architectural decisions  |
 | Large file reading          | Core logic changes       |
+| Code review (self-review)   | Synthesis of findings    |
 
-One task per subagent. Synthesize findings before acting.
+One task per agent. Synthesize findings before acting.
 
 ### Model Policy
-- **Task tool subagents**: Sonnet 4.6 (`model: "sonnet"`) or newer. No Haiku for substantive work.
-- **Codex MCP subagents** (`mcp__codex*`): Prefer for heavy analysis, refactoring, code review, and test generation — they have a significantly larger context window than Task subagents, ideal for large files and cross-file work. Use Codex 5.3+, always high reasoning effort.
-- Re-check after plugin updates — models may silently reset.
+- **Never downgrade models without explicit user consent.** Do not switch from Opus to Sonnet/Haiku for cost or speed reasons — the user chose Opus deliberately. If capacity errors (429/529) occur, retry with the same model. Only the user can authorize a model downgrade.
+- **Codex MCP subagents** (`mcp__codex*`): Prefer for heavy analysis, refactoring, code review, and test generation — significantly larger context window than Task subagents. Use Codex 5.3+, always high reasoning effort.
+- **Cache-hot sessions**: Don't switch models mid-session. Fork to a subagent if a subtask needs different capabilities. Switching models invalidates the prompt cache for the entire session = slower + more expensive.
 
 ## Safety
 
@@ -101,22 +112,26 @@ One task per subagent. Synthesize findings before acting.
 - One logical change per commit.
 - New services in Docker/docker-compose. Bare-metal only if explicitly approved.
 
-## Context Discipline
+## Context Mastery
 
-**Context decay**: After 10+ messages in a conversation, re-read any file before editing it. Do not trust your memory of file contents — auto-compaction may have silently destroyed that context. Editing against stale state produces broken output.
+The context window is finite. The file system is not. Beat the window.
 
-**Edit integrity**: Before every file edit, re-read the file. After editing, read it again to confirm the change applied correctly. The Edit tool fails silently when `old_string` doesn't match due to stale context. Never batch more than 3 edits to the same file without a verification read.
+**Persist before you lose it**: For any multi-step task, write working state (findings, decisions, intermediate results, architectural notes) to `tasks/context.md`. Do this proactively — don't wait for compaction to erase your progress. After compaction, only ~5 recent message pairs survive. Your files survive forever.
 
-**File read budget**: For files over 500 LOC, use `offset` and `limit` parameters to read in sequential chunks. Never assume you've seen a complete file from a single read.
+**Control compaction**: Run `/compact` deliberately after completing a major phase — on your terms, not the system's. Write critical state to files first. You decide what survives, not auto-compact.
 
-**Tool result truncation**: If any search or command returns suspiciously few results, re-run with narrower scope (single directory, stricter glob). State when you suspect truncation occurred.
+**Never work with partial data**: Grep caps at 250 results by default — use `head_limit: 0` for exhaustive results when you need the full picture. If any tool result seems suspiciously short, it was likely truncated to a 2KB preview — re-run with narrower scope or read the persisted output file.
 
-**Rename safety**: When renaming any function/type/variable, grep is text matching, not an AST. Search separately for: direct calls, type-level references, string literals containing the name, dynamic imports, re-exports and barrel files, test files and mocks. Assume one grep missed something.
+**After long conversations**: Re-read files before editing. Compaction may have silently erased your memory of their contents.
+
+**Rename safety**: Grep is text matching, not an AST. When renaming, search separately for: direct calls, type references, string literals, dynamic imports, re-exports, barrel files, test mocks. Assume one grep missed something.
 
 ## Claude Code Tools
 - `Glob` not `find` | `Grep` not `rg` | `Read` not `cat` | `Edit` over `Write`
 - `TodoWrite` for multi-step tracking
 - Independent calls in parallel. Dependent calls chained with `&&`.
+- **Bash timeout**: Default 120s. Set `timeout` up to 600s for long builds/tests.
+- **Exhaustive grep**: `head_limit: 0` when you need ALL matches, not a sample.
 
 ## Anti-Patterns
 
